@@ -18,17 +18,26 @@ class Field:
         return self.field[i]
 
     def get_winner(self):
-        winner = None
         for victory in self.victories:
-            for x, y in victory:
-                if self.field[x][y] == Consts.EMPTY:
-                    winner = None
-                    break
-                elif winner is None:
-                    winner = self.field[x][y]
-                elif winner != self.field[x][y]:
-                    winner = None
-                    break
-            if winner is not None:
-                return winner
+            symbols = [self.field[x][y] for x, y in victory]
+            if symbols == [Consts.PLAYER1, Consts.PLAYER1, Consts.PLAYER1]:
+                return Consts.PLAYER1
+            elif symbols == [Consts.PLAYER2, Consts.PLAYER2, Consts.PLAYER2]:
+                return Consts.PLAYER2
         return None
+
+    def get_winner_if_next_turn(self, player_symbol: str, x: int, y: int):
+        if x < 0 or x > 2 or y < 0 or y > 2:
+            print("ОШИБКА! Неправильный индекс!")
+            return None
+
+        old_value = self.field[x][y]
+        if old_value != Consts.EMPTY:
+            print("ОШИБКА! Ячейка не пуста!")
+            return None
+
+        self.field[x][y] = player_symbol
+        winner = self.get_winner()
+
+        self.field[x][y] = old_value
+        return winner
