@@ -73,6 +73,24 @@ def game_core_v4(number, low=MIN_VALUE, high=MAX_VALUE, count=1):
         return game_core_v4(number, low, mid - 1, count + 1)  # ищем в промежутке low .. mid-1
 
 
+def game_core_v5(number):
+    """Экспоненциальный поиск (https://en.m.wikipedia.org/wiki/Exponential_search).
+       Функция принимает загаданное число и возвращает число попыток"""
+    if number < MIN_VALUE or number > MAX_VALUE:
+        print(f"ОШИБКА! Число должно быть в диапазоне [{MIN_VALUE} .. {MAX_VALUE}]")
+        return 0
+
+    bound, count = 1, 0
+    while True:
+        count += 1
+        if bound == number:
+            return count  # угадали
+        elif bound < number:
+            bound *= 2
+        else:
+            return game_core_v4(number, bound // 2, min(bound, MAX_VALUE), count + 1)  # делаем бинарный поиск
+
+
 def score_game(game_core):
     """Запускаем игру 1000 раз, чтобы узнать, как быстро игра угадывает число"""
     scores = []
@@ -98,3 +116,7 @@ score_game(game_core_v3)
 
 print("\nАлгоритм 4 (мой):")
 score_game(game_core_v4)
+
+print("\nАлгоритм 5 (мой):")
+score_game(game_core_v5)
+
