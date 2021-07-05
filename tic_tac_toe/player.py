@@ -44,6 +44,9 @@ class ComputerPlayer(Player):
     def __init__(self, player_symbol: str):
         super(ComputerPlayer, self).__init__(player_symbol)
 
+        # Unless it is an "emergency" (we can win this turn, or we have to prevent our opponent to win next turn),
+        # we try to make a move to the center (1, 1) - highest priority (0), or into the corners (priorities 1-4),
+        # or other cells (priorities 5-8). Please note that the lower the number, the more preferred is the turn.
         self.turn_priorities = {(0, 0): 1, (0, 1): 6, (0, 2): 2,
                                 (1, 0): 5, (1, 1): 0, (1, 2): 7,
                                 (2, 0): 4, (2, 1): 8, (2, 2): 3}
@@ -54,13 +57,14 @@ class ComputerPlayer(Player):
         for x in range(3):
             for y in range(3):
                 if field[x][y] == Consts.EMPTY:
+                    # we can win this turn
                     if field.get_winner_if_next_turn(self.player_symbol, x, y) == self.player_symbol:
                         return x, y
+                    # we have to prevent the opponent from winning
                     elif field.get_winner_if_next_turn(self.opponent_symbol, x, y) == self.opponent_symbol:
-                        result_x, result_y, result_priority = x, y, -1  # we need to prevent the opponent from winning
-                    elif result_priority is None:
-                        result_x, result_y, result_priority = x, y, self.turn_priorities[(x, y)]
-                    elif result_priority > self.turn_priorities[(x, y)]:
+                        result_x, result_y, result_priority = x, y, -1
+                    # choose the turn with the highest priority
+                    elif (result_priority is None) or (result_priority > self.turn_priorities[(x, y)]):
                         result_x, result_y, result_priority = x, y, self.turn_priorities[(x, y)]
 
         print(f"Ход игрока {self.player_symbol}: {x} {y}")
