@@ -143,7 +143,9 @@ JOIN dst_project.airports a ON f.departure_airport=a.airport_code
 WHERE a.city='Anapa'
   AND (status='Departed'
        OR status='Arrived')
-  AND actual_departure BETWEEN 'January 1, 2017, 00:00 AM' AND 'February 28, 2017, 12:00 PM'
+  AND (date_trunc('month', actual_departure) in ('2017-01-01',
+                                                 '2017-02-01',
+                                                 '2017-12-01'))
 
 5.1.3
 
