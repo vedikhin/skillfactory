@@ -1,0 +1,128 @@
+4.1
+
+SELECT a.city,
+       count(a.airport_code)
+FROM dst_project.airports a
+GROUP BY a.city
+HAVING count(a.airport_code) > 1
+
+
+4.2.1
+
+SELECT count(DISTINCT status)
+FROM dst_project.flights
+
+
+4.2.2
+
+SELECT count(*)
+FROM dst_project.flights
+WHERE status='Departed'
+
+4.2.3
+
+SELECT count(seat_no)
+FROM dst_project.seats
+WHERE aircraft_code = '773'
+
+4.2.4
+
+SELECT count(*)
+FROM dst_project.flights
+WHERE status = 'Arrived'
+  AND ((actual_arrival BETWEEN 'April 1, 2017, 00:00 AM' AND 'September 1, 2017, 12:00 PM')
+       OR (actual_departure BETWEEN 'April 1, 2017, 00:00 AM' AND 'September 1, 2017, 12:00 PM'))
+
+4.3.1
+
+SELECT count(*)
+FROM dst_project.flights
+WHERE status = 'Cancelled'
+
+4.3.2
+
+SELECT count(*)
+FROM dst_project.aircrafts
+WHERE lower(model) like lower('%Boeing%')
+
+SELECT count(*)
+FROM dst_project.aircrafts
+WHERE lower(model) like lower('%Sukhoi Superjet%')
+
+SELECT count(*)
+FROM dst_project.aircrafts
+WHERE lower(model) like lower('%Airbus%')
+
+4.3.3
+
+SELECT split_part(timezone, '/', 1) region,
+       count(airport_code) COUNT
+FROM dst_project.airports
+GROUP BY region
+ORDER BY COUNT DESC
+
+4.3.4
+
+SELECT flight_id,
+       actual_arrival - scheduled_arrival delay
+FROM dst_project.flights
+WHERE status='Arrived'
+ORDER BY delay DESC
+LIMIT 1
+
+4.4.1
+
+SELECT scheduled_departure
+FROM dst_project.flights
+ORDER BY scheduled_departure
+LIMIT 1
+
+4.4.2
+
+SELECT EXTRACT(EPOCH
+               FROM (scheduled_arrival - scheduled_departure)) / 60 AS duration
+FROM dst_project.flights
+ORDER BY duration DESC
+LIMIT 1
+
+4.4.3
+
+SELECT departure_airport,
+       arrival_airport,
+       max(scheduled_arrival - scheduled_departure)
+FROM dst_project.flights
+GROUP BY departure_airport,
+         arrival_airport
+HAVING max(scheduled_arrival - scheduled_departure) =
+  (SELECT max(scheduled_arrival - scheduled_departure)
+   FROM dst_project.flights)
+
+4.4.4
+
+SELECT FLOOR(EXTRACT(EPOCH
+                     FROM (avg(scheduled_arrival - scheduled_departure))) / 60)
+FROM dst_project.flights
+WHERE status='Arrived'
+
+4.5.1
+
+SELECT fare_conditions,
+       count(seat_no) seat_count
+FROM dst_project.seats
+WHERE aircraft_code='SU9'
+GROUP BY fare_conditions
+ORDER BY seat_count DESC
+LIMIT 1
+
+4.5.2
+
+SELECT min(total_amount)
+FROM dst_project.bookings
+
+4.5.3
+
+SELECT b.seat_no
+FROM dst_project.tickets t
+JOIN dst_project.boarding_passes b ON t.ticket_no = b.ticket_no
+WHERE passenger_id='4313 788533'
+
