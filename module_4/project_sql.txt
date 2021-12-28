@@ -99,20 +99,7 @@ GROUP BY a.model,
          f.arrival_airport
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-Расчитаем total cost для каждого рейса:
+6. Расчитаем прибыль для каждого рейса:
 
 WITH airport_distance AS
   (SELECT a1.airport_code,
@@ -133,21 +120,39 @@ WITH airport_distance AS
    FROM dst_project.seats
    WHERE aircraft_code in ('733',
                            'SU9')
-   GROUP BY aircraft_code)
+   GROUP BY aircraft_code),
+     revenue_per_flight AS
+  (SELECT r.flight_id,
+          sum(r.total_amount) / 58.14 revenue_usd
+   FROM
+     (SELECT f.flight_id,
+             b.book_ref,
+             min(b.total_amount) total_amount
+      FROM dst_project.ticket_flights f
+      JOIN dst_project.tickets t ON t.ticket_no=f.ticket_no
+      JOIN dst_project.bookings b ON t.book_ref = b.book_ref
+      GROUP BY f.flight_id,
+               b.book_ref) r
+   GROUP BY r.flight_id)
 SELECT f.flight_id,
        f.flight_no,
        f.scheduled_departure,
        a.model,
        f.arrival_airport,
-       min((1.55 / 4.54609) * s.seat_count * d.distance_km / 100) fuel_cost_usd,
-       min((1.55 / 4.54609) * (s.seat_count * d.distance_km / 100) / 0.237) total_cost_usd
+       (1.55 / 4.54609) * s.seat_count * d.distance_km / 100 fuel_cost_usd,
+       (1.55 / 4.54609) * (s.seat_count * d.distance_km / 100) / 0.237 total_cost_usd,
+       r.revenue_usd,
+       r.revenue_usd - (1.55 / 4.54609) * (s.seat_count * d.distance_km / 100) / 0.237 profit_usd
 FROM dst_project.flights f
 JOIN airport_distance d ON f.arrival_airport=d.airport_code
 JOIN fuel_consumption c ON c.aircraft_code=f.aircraft_code
 JOIN seat_count s ON s.aircraft_code=f.aircraft_code
 JOIN dst_project.aircrafts a ON a.aircraft_code=f.aircraft_code
+JOIN revenue_per_flight r ON f.flight_id = r.flight_id
 WHERE departure_airport = 'AAQ'
   AND (date_trunc('month', scheduled_departure) in ('2017-01-01',
                                                     '2017-02-01',
                                                     '2017-12-01'))
   AND status not in ('Cancelled')
+ORDER BY profit_usd
+
