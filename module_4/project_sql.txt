@@ -1,0 +1,60 @@
+Слайд "Методика Расчета себестоимости рейса"
+
+1. Список аэропортов, куда есть рейсы из Анапы:
+
+WITH airports_inbound_flights AS
+  (SELECT DISTINCT f.departure_airport airport_code
+   FROM dst_project.flights f
+   JOIN dst_project.airports a ON f.arrival_airport=a.airport_code
+   WHERE a.city='Anapa' ),
+     airports_oubound_flights AS
+  (SELECT DISTINCT f.arrival_airport airport_code
+   FROM dst_project.flights f
+   JOIN dst_project.airports a ON f.departure_airport=a.airport_code
+   WHERE a.city='Anapa' )
+SELECT DISTINCT a1.airport_code,
+                a2.airport_name,
+                a2.city
+FROM
+  (SELECT airport_code
+   FROM airports_inbound_flights
+   UNION ALL SELECT airport_code
+   FROM airports_oubound_flights) a1
+JOIN dst_project.airports a2 ON a1.airport_code=a2.airport_code
+
+
+2. Модели самолетов, которые летают их/в Анапу:
+
+SELECT DISTINCT f.aircraft_code,
+                a.model,
+                a.range
+FROM dst_project.flights f
+JOIN dst_project.aircrafts a ON a.aircraft_code=f.aircraft_code
+WHERE (f.arrival_airport='AAQ'
+       OR f.departure_airport='AAQ')
+  AND status in ('Departed',
+                 'Arrived')
+
+
+3. Расстояние между аэропортами:
+
+Для расчета длины между двумя точками использовалась формула по данной ссылке: https://stackoverflow.com/questions/61135374/postgresql-calculate-distance-between-two-points-without-using-postgis/65739481#65739481
+
+Посколько прав на создание функций не было, то пришлось заинлайнить функцию как:
+acos(sin(pi() * lat1 / 180) * sin(pi() * lat2 / 180) + cos(pi() * lat1 / 180) * cos(pi() * lat2 / 180) * cos(pi() * (lon1 - lon2) / 180)) * 180 / pi() * 60 * 1.1515 * 1.609344
+
+Получаем SQL:
+
+SELECT a1.airport_code,
+       a1.latitude latitude1,
+       a1.longitude longitude1,
+       a2.latitude latitude2,
+       a2.longitude longitude2,
+       acos(sin(pi() * a1.latitude / 180) * sin(pi() * a2.latitude / 180) + cos(pi() * a1.latitude / 180) * cos(pi() * a2.latitude / 180) * cos(pi() * (a1.longitude - a2.longitude) / 180)) * 180 / pi() * 60 * 1.1515 * 1.609344 distance_km
+FROM dst_project.airports a1
+JOIN dst_project.airports a2 ON a2.airport_code='AAQ'
+WHERE a1.airport_code in ('EGO',
+                          'NOZ',
+                          'SVO')
+ORDER BY distance_km
+
